@@ -366,39 +366,46 @@ const finePointer = window.matchMedia('(pointer:fine)').matches;
 if(!finePointer) document.documentElement.classList.add('touch');
  
 /* =========================================================================
-   FOLDERS:  code/portfolio-black-red.html
-             videos/*.mp4        photos/*.png (software logos)
-   PROJECTS: the layout reads each video's real shape (vertical / horizontal /
-   square) and balances the 3 columns automatically. `type` is only a
-   fallback ('v' or 'h') if a file can't be read.
-   To add a video: put the file in videos/ and add one line at the bottom.
+   FOLDER STRUCTURE (everything lives in ONE project folder):
+
+     your-project/
+       index.html          <- this file
+       videos/*.mp4
+       photos/*.png        (software logos)
+
+   Paths below are relative to index.html (no "../" needed).
+   NOTE: Netlify/Vercel run on Linux, so file names are CASE-SENSITIVE.
+   "Gym Edit.mp4" and "gym edit.mp4" are different files there.
+
+   To add a video: put the file in videos/ and add one line at the bottom
+   of the PROJECTS list.
    ========================================================================= */
 const PROJECTS = [
-  { id:1,  type:'v', title:'3D Camera',                     video:'../videos/3d%20camara.mp4' },
-  { id:2,  type:'v', title:'AI Video',                      video:'../videos/ai%20video.mp4' },
-  { id:3,  type:'v', title:'Concept Based Edit',            video:'../videos/concept%20based%20edit.mp4' },
-  { id:4,  type:'v', title:'Fast Cut Edit',                 video:'../videos/Fast%20Cut%20Edit.mp4' },
-  { id:5,  type:'h', title:'Fast Cut Vlogs Edit',           video:'../videos/Fast%20cut%20vlogs%20edit.mp4' },
-  { id:6,  type:'v', title:'Food Reel',                     video:'../videos/food%20reel.mp4' },
-  { id:7,  type:'v', title:'Gym Edit',                      video:'../videos/Gym%20Edit.mp4' },
-  { id:8,  type:'h', title:'Hotel Showcase Video',          video:'../videos/Hotel%20Showcase%20Video.mp4' },
-  { id:9,  type:'v', title:'Insta Trend Reel',              video:'../videos/insta%20trend%20reel.mp4' },
-  { id:10, type:'v', title:'Makeup Reel',                   video:'../videos/Makeup%20Reel.mp4' },
-  { id:11, type:'v', title:'Mask And Speed Ramp',           video:'../videos/Mask%20And%20Speed%20Ramp.mp4' },
-  { id:12, type:'v', title:'Mask Out Edit',                 video:'../videos/Mask%20Out%20Edit.mp4' },
-  { id:13, type:'h', title:'Motion Reel',                   video:'../videos/Motion%20Reel.mp4' },
-  { id:14, type:'h', title:'Review Video',                  video:'../videos/Review%20Video.mp4' },
-  { id:15, type:'v', title:'Short Concept Based Edit',      video:'../videos/short%20concept%20based%20edit.mp4' },
-  { id:16, type:'v', title:'Speed Ramp',                    video:'../videos/Speed%20Ramp.mp4' },
-  { id:17, type:'h', title:'Traditional Mix Food Showcase', video:'../videos/traditional%20Mix%20Food%20%20showcase%20video.mp4' },
-  { id:18, type:'h', title:'Traditional Restaurant Video',  video:'../videos/Traditional%20Restaurant%20Video.mp4' },
-  { id:19, type:'v', title:'UGC Reel',                      video:'../videos/ugc%20reel.mp4' },
-  { id:20, type:'h', title:'Wedding Video',                 video:'../videos/wedding%20video.mp4' },
+  { id:1,  type:'v', title:'3D Camera',                     video:'videos/3d%20camara.mp4' },
+  { id:2,  type:'v', title:'AI Video',                      video:'videos/ai%20video.mp4' },
+  { id:3,  type:'v', title:'Concept Based Edit',            video:'videos/concept%20based%20edit.mp4' },
+  { id:4,  type:'v', title:'Fast Cut Edit',                 video:'videos/Fast%20Cut%20Edit.mp4' },
+  { id:5,  type:'h', title:'Fast Cut Vlogs Edit',           video:'videos/Fast%20cut%20vlogs%20edit.mp4' },
+  { id:6,  type:'v', title:'Food Reel',                     video:'videos/food%20reel.mp4' },
+  { id:7,  type:'v', title:'Gym Edit',                      video:'videos/Gym%20Edit.mp4' },
+  { id:8,  type:'h', title:'Hotel Showcase Video',          video:'videos/Hotel%20Showcase%20Video.mp4' },
+  { id:9,  type:'v', title:'Insta Trend Reel',              video:'videos/insta%20trend%20reel.mp4' },
+  { id:10, type:'v', title:'Makeup Reel',                   video:'videos/Makeup%20Reel.mp4' },
+  { id:11, type:'v', title:'Mask And Speed Ramp',           video:'videos/Mask%20And%20Speed%20Ramp.mp4' },
+  { id:12, type:'v', title:'Mask Out Edit',                 video:'videos/Mask%20Out%20Edit.mp4' },
+  { id:13, type:'h', title:'Motion Reel',                   video:'videos/Motion%20Reel.mp4' },
+  { id:14, type:'h', title:'Review Video',                  video:'videos/Review%20Video.mp4' },
+  { id:15, type:'v', title:'Short Concept Based Edit',      video:'videos/short%20concept%20based%20edit.mp4' },
+  { id:16, type:'v', title:'Speed Ramp',                    video:'videos/Speed%20Ramp.mp4' },
+  { id:17, type:'h', title:'Traditional Mix Food Showcase', video:'videos/traditional%20Mix%20Food%20%20showcase%20video.mp4' },
+  { id:18, type:'h', title:'Traditional Restaurant Video',  video:'videos/Traditional%20Restaurant%20Video.mp4' },
+  { id:19, type:'v', title:'UGC Reel',                      video:'videos/ugc%20reel.mp4' },
+  { id:20, type:'h', title:'Wedding Video',                 video:'videos/wedding%20video.mp4' },
  
   // =====================================================
   // ADD NEW PROJECTS BELOW
   // =====================================================
-  // { id:21, type:'v', title:'New Project', video:'../videos/new-project.mp4' },
+  // { id:21, type:'v', title:'New Project', video:'videos/new-project.mp4' },
 ];
  
 const SERVICES = [
@@ -412,12 +419,12 @@ const SERVICES = [
  
 /* Software logos — each lists possible file names; the first one that loads is used */
 const SKILLS = [
-  { name:'Photoshop',     imgs:['../photos/photoshop.png'] },
-  { name:'Illustrator',   imgs:['../photos/illustrator.png','../photos/illustrator%20(2).png'] },
-  { name:'After Effects', imgs:['../photos/after-effects.png'] },
-  { name:'Premiere Pro',  imgs:['../photos/premiere-pro.png','../photos/premiere-pro%20(1).png'] },
-  { name:'Canva',         imgs:['../photos/canva.png'] },
-  { name:'CapCut',        imgs:['../photos/capcut.png'] },
+  { name:'Photoshop',     imgs:['photos/photoshop.png'] },
+  { name:'Illustrator',   imgs:['photos/illustrator.png','photos/illustrator%20(2).png'] },
+  { name:'After Effects', imgs:['photos/after-effects.png'] },
+  { name:'Premiere Pro',  imgs:['photos/premiere-pro.png','photos/premiere-pro%20(1).png'] },
+  { name:'Canva',         imgs:['photos/canva.png'] },
+  { name:'CapCut',        imgs:['photos/capcut.png'] },
 ];
  
 const EMAIL = 'tanmaysakhare200@gmail.com';
