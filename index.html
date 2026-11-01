@@ -134,6 +134,7 @@
   .skill-card:hover .logo-badge{ filter:grayscale(0) brightness(1) opacity(1) drop-shadow(0 0 16px rgba(255,30,30,.55)); transform:scale(1.1); }
   .skill-card span{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; position:relative; color:var(--mute); transition:color .4s ease; }
   .skill-card:hover span{ color:var(--white); }
+  @media (hover:none){ .logo-badge{ filter:none; } .skill-card span{ color:var(--white); } }
  
   /* services */
   #services{ padding:110px 0; }
@@ -313,7 +314,7 @@
   <div class="wrap">
     <div class="eyebrow reveal">05 — Selected Work</div>
     <h2 class="section-title reveal">Selected work.</h2>
-    <p class="section-sub reveal">Hover to preview muted · click for sound · double-click to watch full screen.</p>
+    <p class="section-sub reveal">Hover (or scroll on mobile) to preview muted · tap for sound · double-tap to watch full screen.</p>
     <div class="video-reel" id="video-reel"></div>
   </div>
 </section>
@@ -588,27 +589,10 @@ document.getElementById('service-grid').innerHTML = SERVICES.map((s,i)=>`
   </div>`).join('');
  
 /* ---------------- selected work: measure every video, then balance 3 columns ---------------- */
-function probeRatio(p){
-  return new Promise(res=>{
-    const v = document.createElement('video');
-    v.preload = 'metadata'; v.muted = true;
-    let t;
-    const done = r=>{ clearTimeout(t); v.onloadedmetadata = v.onerror = null; v.removeAttribute('src'); v.load(); res(r); };
-    t = setTimeout(()=>done(null), 5000);
-    v.onloadedmetadata = ()=> done(v.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : null);
-    v.onerror = ()=> done(null);
-    v.src = p.video;
-  });
-}
- 
 async function buildReel(){
-  const ratios = await Promise.all(PROJECTS.map(probeRatio));
-  const items = PROJECTS.map((p,i)=>{
-    let r = ratios[i] || (p.type==='h' ? 16/9 : 9/16);
-    r = Math.min(1.9, Math.max(0.5, r));
-    return { p, i, r };
-  });
- 
+  /* render immediately using the v/h guess; real shape is applied when each video's metadata loads */
+  const items = PROJECTS.map((p,i)=>({ p, i, r: p.type==='h' ? 16/9 : 9/16 }));
+
   /* greedy: each video goes to the currently shortest column (middle column sits higher) */
   const heights = [0.35, 0, 0.35];
   const cols = [[],[],[]];
@@ -644,7 +628,7 @@ function stopFrame(frame){
   const v = frame.querySelector('video'); if(!v) return;
   v.pause(); v.currentTime = 0; v.muted = true;
   frame.classList.remove('playing','sound-on');
-  const s = frame.querySelector('.v-sound'); if(s) s.textContent = '🔇 Click for Sound';
+  const s = frame.querySelector('.v-sound'); if(s) s.textContent = finePointer ? '🔇 Click for Sound' : '🔇 Tap for Sound';
 }
 function startFrame(frame){
   const v = frame.querySelector('video'); if(!v || frame.classList.contains('broken')) return;
@@ -656,36 +640,62 @@ function startFrame(frame){
  
 function bindVideoCards(){
   const frames = document.querySelectorAll('.video-frame');
- 
+  const isTouch = !finePointer;
+
   /* lazy-load: only fetch a video's first frame when it's near the screen */
   const loadIO = new IntersectionObserver(entries=>{
     entries.forEach(en=>{
       if(!en.isIntersecting) return;
       const v = en.target.querySelector('video');
-      if(v && !v.src){ v.preload = 'metadata'; v.src = v.dataset.src + '#t=0.1'; }
+      if(v && !v.getAttribute('src')){
+        v.preload = 'metadata';
+        v.setAttribute('src', v.dataset.src + '#t=0.1');
+        v.load();
+      }
       loadIO.unobserve(en.target);
     });
-  }, { rootMargin:'900px 0px' });
- 
-  /* pause the playing video if it scrolls out of view */
+  }, { rootMargin: isTouch ? '400px 0px' : '900px 0px' });
+
+  /* desktop: pause the playing video when it scrolls out of view */
   const pauseIO = new IntersectionObserver(entries=>{
     entries.forEach(en=>{ if(!en.isIntersecting && en.target === activeFrame){ stopFrame(en.target); activeFrame = null; } });
   }, { threshold:0.1 });
- 
+
+  /* mobile: no hover, so auto-play (muted) whichever video is most in view */
+  const ratios = new Map();
+  const autoIO = isTouch ? new IntersectionObserver(entries=>{
+    entries.forEach(en=>ratios.set(en.target, en.isIntersecting ? en.intersectionRatio : 0));
+    let best = null, bestR = 0.55;
+    ratios.forEach((r,f)=>{ if(r > bestR){ best = f; bestR = r; } });
+    if(best){ if(best !== activeFrame) startFrame(best); }
+    else if(activeFrame){ stopFrame(activeFrame); activeFrame = null; }
+  }, { threshold:[0,0.25,0.55,0.75,1] }) : null;
+
   frames.forEach(frame=>{
     const v = frame.querySelector('video');
-    loadIO.observe(frame); pauseIO.observe(frame);
- 
+    loadIO.observe(frame);
+    if(autoIO) autoIO.observe(frame); else pauseIO.observe(frame);
+
+    /* use the real video shape once known */
+    v.addEventListener('loadedmetadata', ()=>{
+      if(v.videoWidth && v.videoHeight){
+        const r = Math.min(1.9, Math.max(0.5, v.videoWidth / v.videoHeight));
+        frame.style.aspectRatio = r;
+      }
+    });
+
     v.addEventListener('error', ()=>{
-      if(!v.src) return;
+      if(!v.getAttribute('src')) return;
       frame.classList.add('broken');
       frame.querySelector('.v-missing').style.display = 'flex';
       v.style.display = 'none';
     });
- 
-    frame.addEventListener('mouseenter', ()=> startFrame(frame));
-    frame.addEventListener('mouseleave', ()=>{ stopFrame(frame); if(activeFrame===frame) activeFrame=null; });
- 
+
+    if(!isTouch){
+      frame.addEventListener('mouseenter', ()=> startFrame(frame));
+      frame.addEventListener('mouseleave', ()=>{ stopFrame(frame); if(activeFrame===frame) activeFrame=null; });
+    }
+
     frame.addEventListener('click', ()=>{
       if(frame.classList.contains('broken')) return;
       const now = Date.now();
@@ -694,7 +704,7 @@ function bindVideoCards(){
       if(v.paused){ startFrame(frame); return; }
       v.muted = !v.muted;
       frame.classList.toggle('sound-on', !v.muted);
-      frame.querySelector('.v-sound').textContent = v.muted ? '🔇 Click for Sound' : '🔊 Sound On';
+      frame.querySelector('.v-sound').textContent = v.muted ? '🔇 Tap for Sound' : '🔊 Sound On';
     });
   });
 }
