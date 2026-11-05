@@ -156,11 +156,17 @@
   .video-frame .v-missing{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; color:var(--mute-2); text-align:center; padding:16px; }
   .video-frame .v-tap{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:none; padding:12px 18px; border-radius:100px; background:rgba(0,0,0,.7); border:1px solid var(--red); font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; pointer-events:none; white-space:nowrap; }
   .video-frame.blocked .v-tap{ display:block; }
+  /* phones keep the same 3-column layout, just tighter */
   @media (max-width:700px){
-    .video-reel{ display:flex; flex-direction:column; align-items:stretch; gap:24px; }
-    .reel-col{ display:contents; }
-    .reel-col:nth-child(odd){ padding-top:0; }
-    .vid-card{ order:var(--i); width:100%; }
+    .video-reel{ gap:10px; margin-top:36px; }
+    .reel-col{ gap:10px; }
+    .reel-col:nth-child(odd){ padding-top:clamp(18px,7vw,48px); }
+    .video-frame{ border-radius:8px; }
+    .video-frame .v-title{ left:7px; right:7px; bottom:7px; font-size:10px; line-height:1.1; }
+    .video-frame .v-hint{ display:none; }
+    .video-frame .v-sound{ right:5px; top:5px; padding:4px 6px; font-size:10px; }
+    .video-frame .v-tap{ padding:8px 12px; font-size:0; }
+    .video-frame .v-tap::before{ content:'\25B6'; font-size:14px; }
   }
 
   #lightbox{ position:fixed; inset:0; z-index:9000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; background:rgba(3,3,3,.94); backdrop-filter:blur(10px); opacity:0; visibility:hidden; transition:opacity .45s ease, visibility .45s ease; }
@@ -591,7 +597,9 @@ function buildReel(){
 
 /* ---------------- video behaviour (phone-friendly) ---------------- */
 let activeFrame = null;
-const soundOffText = () => finePointer ? '🔇 Click for Sound' : '🔇 Tap for Sound';
+const narrow = () => matchMedia('(max-width:700px)').matches;
+const soundOffText = () => narrow() ? '🔇' : (finePointer ? '🔇 Click for Sound' : '🔇 Tap for Sound');
+const soundOnText = () => narrow() ? '🔊' : '🔊 Sound On';
 
 function loadVideo(frame){
   const v = frame.querySelector('video');
@@ -677,7 +685,7 @@ function bindVideoCards(){
       if(v.paused){ startFrame(frame); return; }   /* a tap is a user gesture, so this always works on phones */
       v.muted = !v.muted;
       frame.classList.toggle('sound-on', !v.muted);
-      frame.querySelector('.v-sound').textContent = v.muted ? soundOffText() : '🔊 Sound On';
+      frame.querySelector('.v-sound').textContent = v.muted ? soundOffText() : soundOnText();
     });
   });
 }
