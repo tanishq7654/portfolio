@@ -137,11 +137,18 @@
   .service-card h3{ font-size:22px; margin-top:26px; }
   .service-card p{ font-family:var(--body); font-size:13px; color:var(--mute); margin-top:10px; line-height:1.6; }
 
-  #projects{ padding:120px 0 40px; }
-  .video-reel{ margin-top:56px; display:grid; grid-template-columns:repeat(3,1fr); gap:36px; align-items:start; min-height:200px; }
-  .reel-col{ display:flex; flex-direction:column; gap:36px; min-width:0; }
-  .reel-col:nth-child(odd){ padding-top:clamp(50px,9vw,130px); }
-  .video-frame{ position:relative; width:100%; background:#0a0a0a; border:1px solid rgba(255,255,255,.08); border-radius:14px; overflow:hidden; cursor:none; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; transition:border-color .5s ease, box-shadow .5s ease; }
+  /* ---------- SELECTED WORK: even grid, every video 9:16 ---------- */
+  #projects{ padding:120px 0 80px; }
+  .video-reel{
+    margin-top:56px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:24px;
+  }
+  .reel-col{ display:flex; flex-direction:column; gap:24px; min-width:0; }
+  .reel-col:nth-child(odd){ padding-top:clamp(40px,9vw,130px); }   /* left + right start lower, middle slides up */
+  .vid-card{ min-width:0; }
+  .video-frame{ position:relative; width:100%; aspect-ratio:9/16; background:#0a0a0a; border:1px solid rgba(255,255,255,.08); border-radius:14px; overflow:hidden; cursor:none; touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; transition:border-color .5s ease, box-shadow .5s ease; }
   @media (max-width:900px){ .video-frame{ cursor:pointer; } }
   .video-frame:hover, .video-frame.playing{ border-color:rgba(255,30,30,.55); box-shadow:0 30px 70px -24px rgba(255,30,30,.5); }
   .video-frame video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .8s var(--ease); pointer-events:none; }
@@ -156,10 +163,20 @@
   .video-frame .v-missing{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; color:var(--mute-2); text-align:center; padding:16px; }
   .video-frame .v-tap{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:none; padding:12px 18px; border-radius:100px; background:rgba(0,0,0,.7); border:1px solid var(--red); font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; pointer-events:none; white-space:nowrap; }
   .video-frame.blocked .v-tap{ display:block; }
-  /* phones keep the same 3-column layout, just tighter */
+
+  @media (max-width:1000px){
+    .video-reel{ gap:14px; }
+    .reel-col{ gap:14px; }
+  }
+  /* phones keep a 3-column layout, just tighter */
+  @media (max-width:900px){
+    .video-frame .v-sound{ font-size:0; padding:5px 7px; }
+    .video-frame .v-sound::before{ content:'\1F507'; font-size:11px; }
+    .video-frame.sound-on .v-sound::before{ content:'\1F50A'; }
+  }
   @media (max-width:700px){
-    .video-reel{ gap:10px; margin-top:36px; }
-    .reel-col{ gap:10px; }
+    .video-reel{ gap:8px; margin-top:36px; }
+    .reel-col{ gap:8px; }
     .reel-col:nth-child(odd){ padding-top:clamp(18px,7vw,48px); }
     .video-frame{ border-radius:8px; }
     .video-frame .v-title{ left:7px; right:7px; bottom:7px; font-size:10px; line-height:1.1; }
@@ -321,7 +338,7 @@
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
       <span id="mail-text"></span>
     </a>
-    <a href="#" id="whatsapp-number" class="wa-number">+91 72103 639</a>
+    <a href="#" id="whatsapp-number" class="wa-number">+91 91721 03639</a>
   </div>
 </section>
 
@@ -562,23 +579,14 @@ document.getElementById('service-grid').innerHTML = SERVICES.map((s,i)=>`
     <div><h3>${s.name}</h3><p>${s.desc}</p></div>
   </div>`).join('');
 
-/* ---------------- selected work ---------------- */
+/* ---------------- selected work: even 9:16 grid ---------------- */
 function buildReel(){
-  /* render at once using the v/h guess; the real shape is applied when each video's metadata loads */
-  const items = PROJECTS.map((p,i)=>({ p, i, r: p.type==='h' ? 16/9 : 9/16 }));
-  const heights = [0.35, 0, 0.35];
   const cols = [[],[],[]];
-  items.forEach(it=>{
-    let c = 0;
-    for(let k=1;k<3;k++) if(heights[k] < heights[c] - 0.001) c = k;
-    cols[c].push(it);
-    heights[c] += 1/it.r + 0.1;
-  });
-
+  PROJECTS.forEach((p,i)=> cols[i%3].push(p));   /* 1st→left, 2nd→middle, 3rd→right, repeat */
   document.getElementById('video-reel').innerHTML = cols.map(col=>`<div class="reel-col">${
-    col.map(({p,i,r})=>`
-    <div class="vid-card reveal" style="--i:${i}">
-      <div class="video-frame" data-title="${p.title}" data-src="${p.video}" style="aspect-ratio:${r}">
+    col.map(p=>`
+    <div class="vid-card reveal">
+      <div class="video-frame" data-title="${p.title}" data-src="${p.video}">
         <video data-src="${p.video}" muted playsinline webkit-playsinline loop preload="none" disablepictureinpicture draggable="false"></video>
         <div class="v-scrim"></div>
         <div class="v-hint">Double-click to expand</div>
@@ -660,9 +668,6 @@ function bindVideoCards(){
     frame.querySelector('.v-sound').textContent = soundOffText();
     frame.querySelector('.v-hint').textContent = isTouch ? 'Double-tap to expand' : 'Double-click to expand';
 
-    v.addEventListener('loadedmetadata', ()=>{
-      if(v.videoWidth && v.videoHeight) frame.style.aspectRatio = Math.min(1.9, Math.max(0.5, v.videoWidth / v.videoHeight));
-    });
     v.addEventListener('error', ()=>{
       if(!v.getAttribute('src')) return;
       const code = v.error ? v.error.code : '?';
@@ -723,7 +728,7 @@ document.getElementById('foot-mail').href = mailHref;
 document.getElementById('foot-mail').textContent = EMAIL;
 
 /* ---------------- whatsapp ---------------- */
-const WHATSAPP_NUMBER = '9172103639';   /* NOTE: this looks incomplete (needs 91 + 10 digits = 12 digits) */
+const WHATSAPP_NUMBER = '919172103639';   /* 91 (India) + 9172103639 */
 const WHATSAPP_MESSAGE = "Hi Tanmay! I came across your portfolio and I'd love to discuss a project with you. I have an idea I'd like to bring to life. Can we talk?";
 const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 document.getElementById('whatsapp-btn').href = waLink;
